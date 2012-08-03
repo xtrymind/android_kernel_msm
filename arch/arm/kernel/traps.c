@@ -434,7 +434,6 @@ asmlinkage void __exception do_undefinstr(struct pt_regs *regs)
 	trace_undef_instr(regs, (void *)pc);
 
 die_sig:
->>>>>>> eff605b... ARM: 7526/1: traps: send SIGILL if get_user fails on undef handling path
 #ifdef CONFIG_DEBUG_USER
 	if (user_debug & UDBG_UNDEFINED) {
 		printk(KERN_INFO "%s (%d): undefined instruction: pc=%p\n",

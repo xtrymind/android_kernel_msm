@@ -1487,6 +1487,7 @@ struct xhci_hcd {
 #define XHCI_AMD_0x96_HOST	(1 << 9)
 #define XHCI_TRUST_TX_LENGTH	(1 << 10)
 #define XHCI_SPURIOUS_REBOOT	(1 << 13)
+#define XHCI_COMP_MODE_QUIRK	(1 << 14)
 /*
  * In Synopsis DWC3 controller, PORTSC register access involves multiple clock
  * domains. When the software does a PORTSC write, handshakes are needed
@@ -1502,7 +1503,6 @@ struct xhci_hcd {
  * (16.66 ns x 5 = 84ns) ~100ns after writing to the PORTSC register.
  */
 #define XHCI_PORTSC_DELAY	(1 << 10)
-
 	unsigned int		num_active_eps;
 	unsigned int		limit_active_eps;
 	/* There are two roothubs to keep track of bus suspend info for */
@@ -1519,6 +1519,11 @@ struct xhci_hcd {
 	unsigned		sw_lpm_support:1;
 	/* support xHCI 1.0 spec USB2 hardware LPM */
 	unsigned		hw_lpm_support:1;
+	/* Compliance Mode Recovery Data */
+	struct timer_list	comp_mode_recovery_timer;
+	u32			port_status_u0;
+/* Compliance Mode Timer Triggered every 2 seconds */
+#define COMP_MODE_RCVRY_MSECS 2000
 };
 
 /* convert between an HCD pointer and the corresponding EHCI_HCD */
