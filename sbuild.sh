@@ -47,7 +47,7 @@ make -j16 > /dev/null
 rm `echo $MODULES_DIR"/*"`
 rm `echo ../$CWM_ANY_DIR"system/lib/modules/*"`
 find $KERNEL_DIR -name '*.ko' -exec cp -v {} $MODULES_DIR \;
-find $KERNEL_DIR -name '*.ko' -exec cp -v {} ../$CWM_ANY_DIR"system/lib/modules/" \;
+find $KERNEL_DIR -name '*.ko' -exec cp -v {} ../$CWM_ANY_DIR"kernel/lib/modules/" \;
 cd $INIT_DIR
 find . \( ! -regex '.*/\..*' \) | cpio -o -H newc -R root:root | gzip -9 > ../initrd.img
 cd  $KERNEL_DIR
