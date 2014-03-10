@@ -24,14 +24,13 @@ OUTPUT_DIR=nightlies-4.4.x/
 make -j16
 rm -v ../$OUTPUT_DIR/kernel/zImage
 cp -vr arch/arm/boot/zImage ../$OUTPUT_DIR/kernel/
-cd ../
 
 version=`cat .version`
 KER_VERSION="mako-kernel-0"
 KERNEL_VER=$KER_VERSION$version
 
-cd $OUTPUT_DIR
-zip -rv `echo $KERNEL_VER`.zip kernel META-INF
+cd ../$OUTPUT_DIR
+zip -vr `echo $KERNEL_VER`.zip kernel META-INF
 
 DATE_END=$(date +"%s")
 echo
