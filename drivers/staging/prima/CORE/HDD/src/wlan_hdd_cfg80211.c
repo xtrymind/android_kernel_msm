@@ -510,9 +510,11 @@ struct wiphy *wlan_hdd_cfg80211_wiphy_alloc(int priv_size)
         hddLog(VOS_TRACE_LEVEL_ERROR, "%s: wiphy init failed", __func__);
         return NULL;
     }
-
-    wiphy->country_ie_pref = NL80211_COUNTRY_IE_IGNORE_CORE;
-
+	
+	/*
+	 * we didn't need this function on mako :p
+     * wiphy->country_ie_pref = NL80211_COUNTRY_IE_IGNORE_CORE;
+     */
     return wiphy;
 }
 
