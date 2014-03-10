@@ -4,9 +4,6 @@ head=`git rev-parse --verify --short HEAD 2>/dev/null`
 
 BASE_VER="perf-"
 LOCAL_VER=$BASE_VER$head
-version=`cat .version`
-KER_VERSION="mako-kernel-0"
-KERNEL_VER=$KER_VERSION$version
 
 export LOCALVERSION="-"`echo $LOCAL_VER`
 export ARCH=arm
@@ -29,8 +26,12 @@ rm -v ../$OUTPUT_DIR/kernel/zImage
 cp -vr arch/arm/boot/zImage ../$OUTPUT_DIR/kernel/
 cd ../
 
+version=`cat .version`
+KER_VERSION="mako-kernel-0"
+KERNEL_VER=$KER_VERSION$version
+
 cd $OUTPUT_DIR
-zip -r `echo $KERNEL_VER`.zip kernel META-INF
+zip -rv `echo $KERNEL_VER`.zip kernel META-INF
 
 DATE_END=$(date +"%s")
 echo
