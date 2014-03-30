@@ -97,72 +97,39 @@ int cpufreq_frequency_table_target(struct cpufreq_policy *policy,
 				   unsigned int relation,
 				   unsigned int *index)
 {
-	struct cpufreq_frequency_table optimal = {
-		.index = ~0,
-		.frequency = 0,
-	};
-	struct cpufreq_frequency_table suboptimal = {
-		.index = ~0,
-		.frequency = 0,
-	};
+	int optimal = -1;
+	unsigned int min_distance = ~0;
 	unsigned int i;
 
 	pr_debug("request for target %u kHz (relation: %u) for cpu %u\n",
 					target_freq, relation, policy->cpu);
-
-	switch (relation) {
-	case CPUFREQ_RELATION_H:
-		suboptimal.frequency = ~0;
-		break;
-	case CPUFREQ_RELATION_L:
-		optimal.frequency = ~0;
-		break;
-	}
 
 	if (!cpu_online(policy->cpu))
 		return -EINVAL;
 
 	for (i = 0; (table[i].frequency != CPUFREQ_TABLE_END); i++) {
 		unsigned int freq = table[i].frequency;
+		unsigned int distance;
+
 		if (freq == CPUFREQ_ENTRY_INVALID)
 			continue;
-		if ((freq < policy->min) || (freq > policy->max))
+		if (freq < policy->min || freq > policy->max)
 			continue;
-		switch (relation) {
-		case CPUFREQ_RELATION_H:
-			if (freq <= target_freq) {
-				if (freq >= optimal.frequency) {
-					optimal.frequency = freq;
-					optimal.index = i;
-				}
-			} else {
-				if (freq <= suboptimal.frequency) {
-					suboptimal.frequency = freq;
-					suboptimal.index = i;
-				}
-			}
+
+		distance = abs(freq - target_freq);
+		if (!distance) {
+			min_distance = 0;
+			optimal = i;
 			break;
-		case CPUFREQ_RELATION_L:
-			if (freq >= target_freq) {
-				if (freq <= optimal.frequency) {
-					optimal.frequency = freq;
-					optimal.index = i;
-				}
-			} else {
-				if (freq >= suboptimal.frequency) {
-					suboptimal.frequency = freq;
-					suboptimal.index = i;
-				}
-			}
-			break;
+		} else if (distance < min_distance) {
+			min_distance = distance;
+			optimal = i;
 		}
 	}
-	if (optimal.index > i) {
-		if (suboptimal.index > i)
-			return -EINVAL;
-		*index = suboptimal.index;
-	} else
-		*index = optimal.index;
+	if (min_distance == ~0)
+		return -EINVAL;
+	else
+		*index = optimal;
 
 	pr_debug("target is %u (%u kHz, %u)\n", *index, table[*index].frequency,
 		table[*index].index);
