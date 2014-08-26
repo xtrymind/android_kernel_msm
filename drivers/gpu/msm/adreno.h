@@ -422,14 +422,6 @@ struct log_field {
 	{ BIT(KGSL_FT_TEMP_DISABLE), "temp" }, \
 	{ BIT(KGSL_FT_THROTTLE), "throttle"}
 
-#define ADRENO_FT_TYPES \
-	{ BIT(KGSL_FT_OFF), "off" }, \
-	{ BIT(KGSL_FT_REPLAY), "replay" }, \
-	{ BIT(KGSL_FT_SKIPIB), "skipib" }, \
-	{ BIT(KGSL_FT_SKIPFRAME), "skipframe" }, \
-	{ BIT(KGSL_FT_DISABLE), "disable" }, \
-	{ BIT(KGSL_FT_TEMP_DISABLE), "temp" }
-
 extern struct adreno_gpudev adreno_a2xx_gpudev;
 extern struct adreno_gpudev adreno_a3xx_gpudev;
 extern struct adreno_gpudev adreno_a4xx_gpudev;
