@@ -3005,7 +3005,6 @@ CONFIG_PRIMA_WLAN_LFR=y
 CONFIG_PRIMA_WLAN_OKC=y
 # CONFIG_PRIMA_WLAN_11AC_HIGH_TP is not set
 # CONFIG_QCOM_VOWIFI_11R is not set
-CONFIG_CPUPOWER=y
 
 #
 # Qualcomm MSM specific device drivers
