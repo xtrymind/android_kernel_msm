@@ -53,6 +53,7 @@ struct cpufreq_interactive_cpuinfo {
 	u64 hispeed_validate_time;
 	struct rw_semaphore enable_sem;
 	int governor_enabled;
+	unsigned int two_phase_freq;
 };
 
 static DEFINE_PER_CPU(struct cpufreq_interactive_cpuinfo, cpuinfo);
@@ -124,6 +125,8 @@ static u64 round_to_nw_start(u64 jif)
 	do_div(jif, step);
 	return (jif + 1) * step;
 }
+
+static int two_phase_freq_array[NR_CPUS] = {[0 ... NR_CPUS-1] = 1728000} ;
 
 static void cpufreq_interactive_timer_resched(unsigned long cpu)
 {
@@ -342,6 +345,9 @@ static void cpufreq_interactive_timer(unsigned long data)
 	unsigned int index;
 	unsigned long flags;
 	bool boosted;
+	static unsigned int phase = 0;
+	static unsigned int counter = 0;
+	unsigned int nr_cpus;
 
 	if (!down_read_trylock(&pcpu->enable_sem))
 		return;
@@ -364,9 +370,24 @@ static void cpufreq_interactive_timer(unsigned long data)
 	cpu_load = loadadjfreq / pcpu->target_freq;
 	boosted = boost_val || now < boostpulse_endtime;
 
+	if (counter < 5) {
+		counter++;
+		if (counter > 2) {
+			phase = 1;
+		}
+	}
+
 	if (cpu_load >= go_hispeed_load || boosted) {
 		if (pcpu->target_freq < hispeed_freq) {
-			new_freq = hispeed_freq;
+			nr_cpus = num_online_cpus();
+
+			pcpu->two_phase_freq = two_phase_freq_array[nr_cpus-1];
+			if (pcpu->two_phase_freq < pcpu->policy->cur)
+				phase = 1;
+			if (pcpu->two_phase_freq != 0 && phase == 0 && pcpu->policy->cur >= hispeed_freq) {
+				new_freq = pcpu->two_phase_freq;
+			} else
+				new_freq = hispeed_freq;
 		} else {
 			new_freq = choose_freq(pcpu, loadadjfreq);
 
@@ -375,6 +396,13 @@ static void cpufreq_interactive_timer(unsigned long data)
 		}
 	} else {
 		new_freq = choose_freq(pcpu, loadadjfreq);
+	}
+
+	if (counter > 0) {
+		counter--;
+		if (counter == 0) {
+			phase = 0;
+		}
 	}
 
 	if (pcpu->target_freq >= hispeed_freq &&
@@ -690,6 +718,45 @@ err:
 	return ERR_PTR(err);
 }
 
+static ssize_t show_two_phase_freq
+(struct kobject *kobj, struct attribute *attr, char *buf)
+{
+	int i = 0 ;
+	int shift = 0 ;
+	char *buf_pos = buf;
+	for ( i = 0 ; i < NR_CPUS; i++) {
+		shift = sprintf(buf_pos,"%d,",two_phase_freq_array[i]);
+		buf_pos += shift;
+	}
+	*(buf_pos-1) = '\0';
+	return strlen(buf);
+}
+
+static ssize_t store_two_phase_freq(struct kobject *a, struct attribute *b,
+		const char *buf, size_t count)
+{
+
+	int ret = 0;
+	if (NR_CPUS == 1)
+		ret = sscanf(buf,"%u",&two_phase_freq_array[0]);
+	else if (NR_CPUS == 2)
+		ret = sscanf(buf,"%u,%u",&two_phase_freq_array[0],
+				&two_phase_freq_array[1]);
+	else if (NR_CPUS == 4)
+		ret = sscanf(buf, "%u,%u,%u,%u", &two_phase_freq_array[0],
+				&two_phase_freq_array[1],
+				&two_phase_freq_array[2],
+				&two_phase_freq_array[3]);
+	if (ret < NR_CPUS)
+		return -EINVAL;
+
+	return count;
+}
+
+static struct global_attr two_phase_freq_attr =
+	__ATTR(two_phase_freq, S_IRUGO | S_IWUSR,
+		show_two_phase_freq, store_two_phase_freq);
+
 static ssize_t show_target_loads(
 	struct kobject *kobj, struct attribute *attr, char *buf)
 {
@@ -999,6 +1066,7 @@ static struct attribute *interactive_attributes[] = {
 	&boostpulse.attr,
 	&boostpulse_duration.attr,
 	&io_is_busy_attr.attr,
+	&two_phase_freq_attr.attr,
 	NULL,
 };
 
